@@ -8,7 +8,10 @@ filepath = input("Xin mời nhập đường dẫn tới file: ")
 basename = os.path.basename(filepath)
 print(basename)
 
+
+# Lựa chọn biểu đồ chứa danh sách phòng học
 classroom = pd.read_excel(filepath, sheet_name = 'BIỂU ĐỒ (S)')
+
 # Tên của cột Số phòng mới và Số chỗ
 print(f"Dưới đây là danh sách tên cột của phòng, hãy tìm tên của cột chứa danh sách phòng học và tên của cột ghi sức "
       f"chứa của phòng và ghi vào bên dưới \n \n {classroom.columns} ") 
@@ -19,14 +22,19 @@ classroom_capacity = input("Tên của cột chứa sức chứa của các phò
 # Xử lý và làm sạch dữ liệu
 
 classroom = classroom[[classroom_column, classroom_capacity]]
+
 # Xóa tất cả các hàng chứa toàn bộ dữ liệu trống
 classroom.dropna(axis = 0, how = 'all')
+
 # Đổi tên cột để phù hợp với mô tả của mô
 classroom.rename(columns = {classroom_column: 'Tên phòng', classroom_capacity: 'Sức chứa'}, inplace = True)
+
 # Xóa hai cột trống phía trên (đoạn này cần kiểm tra)
 classroom.drop(labels = [0, 1], inplace = True)
+
 # Đoạn này cũng cần kiểm tra lại, xóa lần nữa cho chắc
 class_room = classroom.dropna(axis = 0, how = 'all')
+
 # Reset lại index của bảng
 class_room = class_room.reset_index(drop = True)
 
