@@ -25,7 +25,9 @@ columns_name_list = list(class_open_plan.columns)
 number_of_columns = len(class_open_plan.columns)
 
 
-# Đổi tên lại toàn bộ các cột
+''' Đổi tên lại toàn bộ các cột (ở cột cuối thì do cô ghi vài thứ vào nên em không biết nên xóa hay không, 
+vậy nên cả cái cột nó toàn NaN nhưng mà thực ra là có hai cột chứa dữ liệu, em  nghĩ là xóa đi rồi tạo hẳn 
+phần ghi chú cho chương trình lúc làm sau này ạ)'''
 for i in range(number_of_columns):
     class_open_plan.rename(columns = {f'{columns_name_list[i]}': f"{class_open_plan.iloc[0][columns_name_list[i]]}"}, inplace = True)
 
