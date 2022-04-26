@@ -7,7 +7,7 @@ A. Lấy dữ liệu
 B. Chuyển dữ liệu đã lấy vào ma trận
 
 
-C. Sử dụng thuật toán di truyền để tìm các phương án tối ưu
+C. Sử dụng thuật toán di truyền để tìm các phương án chấp nhận được
 
 
 D. Chuyển phương án chấp nhận được vào dữ liệu và lặp lại từ bước B
