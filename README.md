@@ -22,5 +22,5 @@ Các ràng buộc chặt và ràng buộc mềm trong xây dựng mô hình
 Mô hình dự kiến được xây dựng theo các bước khái quát sau:
 #### Nhập dữ liệu từ file Excel, gồm danh sách phòng học, sức chứa của phòng, 
 
-## Giao diện người dùng của phần mềm dự kiến sẽ như sau
+## Giao diện người dùng của phần mềm dự kiến
 ![image](https://user-images.githubusercontent.com/93395558/165361324-21aa6969-1b86-4acf-9971-4ea072a1095e.png)
