@@ -50,9 +50,6 @@ Giả sử bài toán có m lớp theo chương trình đào tạo cần xếp T
 ### Xử lý bằng phương pháp tìm kiếm và thuật toán tìm kiếm để tìm ra phương án chấp nhận được
 
 
-## Giao diện người dùng của phần mềm dự kiến sẽ như sau
-![image](https://user-images.githubusercontent.com/93395558/165361324-21aa6969-1b86-4acf-9971-4ea072a1095e.png)
-
 ## Các file sẽ sử dụng bao gồm
 
 
