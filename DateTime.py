@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
 
-class date_and_time():
-    """Add date and time information"""
-thoi_gian_hoc = [{'bắt đầu': '6h45', 'kết thúc': '7h30'},
+
+THOI_GIAN_HOC = [{'bắt đầu': '6h45', 'kết thúc': '7h30'},
                  {'bắt đầu': '7h30', 'kết thúc': '8h15'},
                  {'bắt đầu': '8h25', 'kết thúc': '9h10'},
                  {'bắt đầu': '9h20', 'kết thúc': '10h05'},
@@ -18,6 +17,8 @@ thoi_gian_hoc = [{'bắt đầu': '6h45', 'kết thúc': '7h30'},
                  {'bắt đầu': '17h45', 'kết thúc': '18h30'},
                  {'bắt đầu': '18h30', 'kết thúc': '19h15'},
                  {'bắt đầu': '19h25', 'kết thúc': '20h10'}]
+class date_and_time():
+    """Add date and time information"""
 
     def __init__(self, ma_hp, lop_con, tong_so_lop):
         self.ma_hp = ma_hp
@@ -37,7 +38,7 @@ thoi_gian_hoc = [{'bắt đầu': '6h45', 'kết thúc': '7h30'},
         pass
 
     def hoc_phan(ma_hoc_phan):
-
+        pass
 
 
 
