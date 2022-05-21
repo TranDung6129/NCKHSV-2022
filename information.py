@@ -53,9 +53,12 @@ class ClassInformation:
         self.df.set_index("Mã lớp", inplace = True)
         return self.df.loc[class_code]["Số SV lớp cố định"]
     
-    def get_class_unit_number(self, class_code):
+    def get_class_periods_number(self, class_code):
         '''Trả về số tiết học của một mã lớp trong kỳ, dựa vào khối lượng'''
-        pass
+        self.df.set_index("Mã lớp", inplace = True)
+        periods_retrieve = self.df.loc[class_code]["KHỐI LƯỢNG "]
+        periods = periods_retrieve[0]
+        return periods
     
     def get_participant_class(self, class_code):
         '''Trả về tên của các lớp tham gia một mã lớp'''
