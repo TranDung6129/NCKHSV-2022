@@ -1,3 +1,5 @@
+## INPUT của classroom.py
+
 # Đường dẫn nhập vào chương trình này là theo đường dẫn trên máy của em
 D:/Nghiên cứu ứng dụng/Bài toán lập lịch/TKB-SIE-ky-20212-14.4.22.xlsx
 
@@ -6,3 +8,8 @@ Unnamed: 39
 Unnamed: 41
 
 
+## INPUT của information.py
+
+# Đường dẫn giống như trên
+
+# Kỳ học chứa dữ liệu hiện tại là 20212
