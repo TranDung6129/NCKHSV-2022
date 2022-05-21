@@ -41,7 +41,7 @@ class Classroom:
         '''In ra dataframe chứa tên và sức chứa của các phòng'''
         return f"Dưới đây là danh sách phòng học và sức chứa của phòng: \n\n {self.df}"
         
-    def get_available__classroom_number(self):
+    def get_available_classroom_number(self):
         '''In ra số lượng phòng có thể sử dụng'''
         self.df = self.df.apply(lambda x : True if x['Sức chứa'] != 0 else False, axis=1)
         return f"Số phòng có thể sử dụng là: {self.df.shape[0]}"
