@@ -59,4 +59,12 @@ class ClassInformation:
     
     def get_participant_class(self, class_code):
         '''Trả về tên của các lớp tham gia một mã lớp'''
-        pass
+        self.df.set_index("Mã lớp", inplace = True)
+        participant_class = self.df.loc[class_code]["Lớp"]
+        participant_class_list = list(participant_class.split("+"))
+        for i in participant_class_list:
+            if i == 'B':
+                B_index = participant_class_list.index('B')
+                participant_class_list[B_index - 1] = participant_class_list[B_index - 1] + "+" + participant_class_list[B_index]
+                participant_class_list.remove("B")
+        return participant_class_list
