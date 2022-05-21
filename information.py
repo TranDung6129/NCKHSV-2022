@@ -33,6 +33,19 @@ class ClassInformation:
         # Reset lại index của cột  
         self.df = self.df.reset_index(drop = True)
         
+        # Thêm cột mã lớp
+        self.df.new_class_code = []
+        self.df['STT theo mã HP'] = self.df['STT theo mã HP'].astype(str).str.zfill(3)
+        number_code = self.df["STT theo mã HP"].tolist()
+        for i in number_code:
+            new_code = "134" + str(i)
+            self.df.new_class_code.append(new_code)
+        self.df.insert(1, "Mã lớp", self.df.new_class_code, True)
+            
+        
     def get_table(self):
         '''In ra màn hình bảng chứa thông tin'''
         return self.df
+    
+    def get_student_number(self):
+        pass
