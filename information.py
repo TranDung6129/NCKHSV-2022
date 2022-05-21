@@ -34,18 +34,29 @@ class ClassInformation:
         self.df = self.df.reset_index(drop = True)
         
         # Thêm cột mã lớp
-        self.df.new_class_code = []
+        new_class_code = []
         self.df['STT theo mã HP'] = self.df['STT theo mã HP'].astype(str).str.zfill(3)
         number_code = self.df["STT theo mã HP"].tolist()
         for i in number_code:
             new_code = "134" + str(i)
-            self.df.new_class_code.append(new_code)
-        self.df.insert(1, "Mã lớp", self.df.new_class_code, True)
+            new_class_code.append(new_code)
+        self.df.insert(0, "Mã lớp", new_class_code, True)
             
         
     def get_table(self):
         '''In ra màn hình bảng chứa thông tin'''
         return self.df
     
-    def get_student_number(self):
+    def get_student_number(self, class_code):
+        ''' Trả về số sinh viên từng mã lớp.
+        class_code = ('Mã lớp của lớp cần lấy số sinh viên')'''
+        self.df.set_index("Mã lớp", inplace = True)
+        return self.df.loc[class_code]["Số SV lớp cố định"]
+    
+    def get_class_unit_number(self, class_code):
+        '''Trả về số tiết học của một mã lớp trong kỳ, dựa vào khối lượng'''
+        pass
+    
+    def get_participant_class(self, class_code):
+        '''Trả về tên của các lớp tham gia một mã lớp'''
         pass
