@@ -27,13 +27,18 @@ for class_code in information.get_class_code():
     A_set.append(class_code)
     
 # Tập C gồm p lớp theo chương trình đào tạo 
-C_set = []
+class_extract = []
 class_name_by_class_code = [] 
 for class_code in A_set:
     class_name = information.get_participant_class(class_code)
     class_name_by_class_code.append(class_name)
-C_set = list(itertools.chain.from_iterable(class_name_by_class_code))
+class_extract = list(itertools.chain.from_iterable(class_name_by_class_code))
 
+C_set = []
+for class_name in class_extract:
+    if class_name not in C_set:
+        C_set.append(class_name)
+print(C_set)
 # Tập F là số sinh viên của từng mã lớp
 F_set = []
 for class_code in A_set:
@@ -55,7 +60,6 @@ for classroom_name in classroom.get_class_room_list():
 D_set = []
 for classroom_name in B_set:
     D_set.append(classroom.get_classroom_capacity(classroom_name))
-
 
 # =============================================================================
 # Nhập ma trận G là ma trận biểu thị các lớp chia theo chương trình đào tạo.
@@ -79,6 +83,8 @@ for classroom_name in B_set:
 # Số phòng được sử dụng ít nhất
 
 # Số buổi có tiết học trong tuần của một lớp chia theo chương trình đào tạo là ít nhất
+
+# Trong cùng một buổi học các lớp ưu tiên không cần phải di chuyển giữa các phòng
 
 '''Đưa vào các ràng buộc của mô hình''' 
 # Mỗi mã lớp chỉ được xếp vào một phòng duy nhất
