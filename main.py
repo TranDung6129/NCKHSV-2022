@@ -86,7 +86,7 @@ u_n = model.u
 model.t = pyo.Var(bounds=(1, 10), domain=Integers)
 t = model.t
 # Tạo biến a_nti nếu mã lớp thứ n bắt đầu từ tiết thứ i của buổi t. 
-model.a = pyo.Var(range(nA), range(1, 7), range(1, 11), bounds=(0, 1), initialize=(0), within=Binary)
+model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
 a_nti = model.a
 # Biến p_t = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
 model.p = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
@@ -95,7 +95,7 @@ model.p = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
 model.class_limit = pyo.ConstraintList()
 for n in range(nA):
     y_nm_sum = sum([y_nm[n, m] for m in range(nB)])
-    model.class_limit.add(expr = y_nm_sum <= 1)
+    model.class_limit.add(expr= y_nm_sum <= 1)
 # Mỗi mã lớp chỉ được xếp vào một buổi học (thời gian bắt đầu và kết thúc phải cùng 
 # một buổi)
 model.in_1_session = pyo.ConstraintList()
@@ -103,7 +103,11 @@ for n in range(nA):
     for h_n in H_set:
         model.in_1_session.add(expr = u_n[n] + h_n - 1 <= 6)
 # Mỗi mã lớp chỉ xếp vào buổi học duy nhất
-
+model.each_class_unique_session = pyo.ConstraintList()
+for n in range(nA):
+    for t in range(1, 11):
+        a_nti_sum = sum([a_nti[n, t, i] for i in range(1, 7)])
+        model.each_class_unique_session.add(expr= a_nti_sum == 1)
 # Sức chứa của phòng học lớn hơn sĩ số của mã lớp được xếp vào phòng đó
 
 # Lịch học của các mã lớp con không được trùng nhau
