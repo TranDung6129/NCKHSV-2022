@@ -49,7 +49,7 @@ nF = len(F_set)
 H_set = []
 for class_code in A_set:
     class_periods = information.get_class_periods_number(class_code)
-    H_set.append(class_periods)
+    H_set.append(int(class_periods))
 nH = len(H_set)
 # Tập B là m mã phòng hiện có ở tòa D7 
 B_set = []
@@ -98,12 +98,10 @@ for n in range(nA):
     model.class_limit.add(expr = y_nm_sum <= 1)
 # Mỗi mã lớp chỉ được xếp vào một buổi học (thời gian bắt đầu và kết thúc phải cùng 
 # một buổi)
-# =============================================================================
-# model.in_1_session = pyo.ConstraintList()
-# for n in range(nA):
-#     for h_n in H_set:
-#         model.in_1_session.add(expr = u_n[n] + h_n[n] - 1 <= 6)
-# =============================================================================
+model.in_1_session = pyo.ConstraintList()
+for n in range(nA):
+    for h_n in H_set:
+        model.in_1_session.add(expr = u_n[n] + h_n - 1 <= 6)
 # Mỗi mã lớp chỉ xếp vào buổi học duy nhất
 
 # Sức chứa của phòng học lớn hơn sĩ số của mã lớp được xếp vào phòng đó
