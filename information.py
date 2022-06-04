@@ -5,9 +5,9 @@ import numpy as np
 class ClassInformation:
     
     def __init__(self):
-        filepath = input("Xin mời nhập đường dẫn tới file: ") 
+        filepath = 'D:/Nhóm nghiên cứu/Nghiên cứu ứng dụng/Bài toán lập lịch/TKB-SIE-ky-20212-14.4.22.xlsx'
         # Điền ký học hiện tại, là đối số của tên sheet chọn bên dưới 
-        semester = input("Nhập kỳ học: ")
+        semester = 20212 
         # Lấy sheet chứa kế hoạch kì 20212
         self.df = pd.read_excel(filepath, sheet_name = f'Báo dạy {semester}')
         
@@ -56,7 +56,15 @@ class ClassInformation:
         '''Trả về số tiết học của một mã lớp trong kỳ, dựa vào khối lượng'''
         period_index = self.df.index[self.df['Mã lớp'] == class_code].astype(int)[0]
         periods_retrieve = self.df.at[period_index, 'KHỐI LƯỢNG ']
-        periods = periods_retrieve[0]
+        periods_retrieve = str(periods_retrieve)
+        if periods_retrieve == "" or periods_retrieve == "nan":
+            periods_retrieve = "0(_______)"
+        if len(periods_retrieve) == 1:
+            periods_retrieve = str(periods_retrieve[0]) + "(_______)"
+        if str(periods_retrieve)[1] == "(":
+            periods = str(periods_retrieve)[0]
+        else:
+            periods = str(periods_retrieve)[0:2]
         return periods
     
     def get_participant_class(self, class_code):
