@@ -6,6 +6,7 @@ from information import ClassInformation
 import pyomo.environ as pyo
 from pyomo.environ import * 
 import itertools
+import time as t
 
 '''Nhập đường dẫn và cột không tên là em chưa nghĩ ra hướng giải quyết phù hợp, 
 em dự định sử dụng file nhưng thử mãi chưa dùng được nên chị có thể kiểm tra giúp
@@ -15,11 +16,12 @@ em xem có phù hợp không nếu không thì sẽ nghĩ cách khác ạ'''
 
 # model
 model = pyo.ConcreteModel()
-
+# Điều chỉnh DataFrame 
 classroom = Classroom()
 classroom_df = classroom.df
 information = ClassInformation()
 information_df = information.df
+
 '''Trích xuất các thông tin cần thiết của mô hình'''
 # Tập A gồm n mã lớp sẽ mở trong kỳ xếp thời khóa biểu 
 A_set = [] 
@@ -67,9 +69,21 @@ nD = len(D_set)
 # Cột của ma trận ứng với các mã lớp mở trong kỳ
 # Khởi tạo ma trận chứa tất cả các ô là 0, lấy số cột của ma trận và số hàng của
 # ma trận
-matrix_column_number = len(C_set)
-matrix_row_number = len(A_set)
-G_matrix = np.zeros((matrix_row_number, matrix_column_number))
+# =============================================================================
+# index = information.df.index
+# for class_code in A_set:
+#     condition = information.df["Mã lớp"] == class_code
+#     number_of_classes = len(information.get_participant_class(class_code))
+#     for i in range(1, number_of_classes + 1):
+#         information.df.at[index[condition], f"class1_{i}"] = information.get_participant_class(class_code)[i - 1]
+# =============================================================================
+
+K_matrix = np.zeros((nA, nC))
+for class_code in A_set:
+	class_list = information.get_participant_class(class_code)
+	for class_name in class_list:
+		class_index = C_set.index(class_name)
+		K_matrix[A_set.index(class_code), class_index] = 1
 
 #==============================================================================
 '''Tạo ra các biến của mô hình'''
@@ -82,20 +96,29 @@ y_nm = model.y
 # Tạo biến u_n, là tiết học bắt đầu của lớp thứ n 
 model.u = pyo.Var(range(nA), bounds=(1, 6), domain=Integers)
 u_n = model.u
-# Tạo biến t là buổi học trong tuần (từ thứ 2 đến thứ 6, sáng và chiều)
-model.t = pyo.Var(bounds=(1, 10), domain=Integers)
-t = model.t
+# =============================================================================
+# # Tạo biến t là buổi học trong tuần (từ thứ 2 đến thứ 6, sáng và chiều)
+# model.t = pyo.Var(bounds=(1, 10), domain=Integers)
+# t = model.t
+# =============================================================================
+
+
 # Tạo biến a_nti nếu mã lớp thứ n bắt đầu từ tiết thứ i của buổi t. 
 model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
 a_nti = model.a
 # Biến p_t = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
 model.p = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
-'''Đưa vào các ràng buộc của mô hình''' 
+'''Đưa vào các ràng buộc của mô hình'''
+# Ràng buộc 2
+model.cons2 = pyo.ConstraintList()
+for m in range(nB):
+    y_nm_sum2 = sum(y_nm[n, m] for n in range(nA))
+    model.cons2.add(expr= y_nm_sum2 <= 1000 * x_m[m]) 
 # Mỗi mã lớp chỉ được xếp vào một phòng duy nhất
 model.class_limit = pyo.ConstraintList()
 for n in range(nA):
     y_nm_sum = sum([y_nm[n, m] for m in range(nB)])
-    model.class_limit.add(expr= y_nm_sum <= 1)
+    model.class_limit.add(expr= y_nm_sum == 1)
 # Mỗi mã lớp chỉ được xếp vào một buổi học (thời gian bắt đầu và kết thúc phải cùng 
 # một buổi)
 model.in_1_session = pyo.ConstraintList()
@@ -108,17 +131,21 @@ for n in range(nA):
     for t in range(1, 11):
         a_nti_sum = sum([a_nti[n, t, i] for i in range(1, 7)])
         model.each_class_unique_session.add(expr= a_nti_sum == 1)
-# Sức chứa của phòng học lớn hơn sĩ số của mã lớp được xếp vào phòng đó
+# Ràng buộc thứ 4
 
-# Lịch học của các mã lớp con không được trùng nhau
+# Ràng buộc thứ 5
+
+# Ràng buộc thứ 6
 
 
 '''Đưa vào các hàm mục tiêu của mô hình'''
 # Số phòng được sử dụng ít nhất
 model.obj1 = pyo.Objective(expr = sum([x_m[m] for m in range(nB)]), sense=minimize)
 # Số buổi có tiết học trong tuần của một lớp chia theo chương trình đào tạo là ít nhất
-
+model.obj2 = pyo.Objective()
 # Trong cùng một buổi học các lớp ưu tiên không cần phải di chuyển giữa các phòng
+
+# min 
 
 '''Xử lý mô hình'''
 opt = SolverFactory('cplex')
