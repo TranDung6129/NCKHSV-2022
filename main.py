@@ -102,29 +102,29 @@ u_n = model.u
 # t = model.t
 # =============================================================================
 
-
 # Tạo biến a_nti nếu mã lớp thứ n bắt đầu từ tiết thứ i của buổi t. 
 model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
 a_nti = model.a
-# Biến p_t = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
-model.p = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
+# Biến P_pt = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
+model.P = pyo.Var(range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Binary)
+P_pt = model.P
+# Biến v_nmti là mã lớp thứ n được xếp vào phòng học thứ m vào buổi t, bắt đầu vào tiết i
+model.v = pyo.Var(range(nA), range(nC), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
+v_nmti = model.v
+# Biến q_npt là mã lớp n có lớp con p học vào buổi t
+model.q = pyo.Var(range(nA), range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Binary)
+q_npt = model.q 
 '''Đưa vào các ràng buộc của mô hình'''
-# Ràng buộc 2
-model.cons2 = pyo.ConstraintList()
-for m in range(nB):
-    y_nm_sum2 = sum(y_nm[n, m] for n in range(nA))
-    model.cons2.add(expr= y_nm_sum2 <= 1000 * x_m[m]) 
 # Mỗi mã lớp chỉ được xếp vào một phòng duy nhất
 model.class_limit = pyo.ConstraintList()
 for n in range(nA):
     y_nm_sum = sum([y_nm[n, m] for m in range(nB)])
     model.class_limit.add(expr= y_nm_sum == 1)
-# Mỗi mã lớp chỉ được xếp vào một buổi học (thời gian bắt đầu và kết thúc phải cùng 
-# một buổi)
-model.in_1_session = pyo.ConstraintList()
-for n in range(nA):
-    for h_n in H_set:
-        model.in_1_session.add(expr = u_n[n] + h_n - 1 <= 6)
+# Ràng buộc 2
+model.const2 = pyo.ConstraintList()
+for m in range(nB):
+    y_nm_sum2 = sum(y_nm[n, m] for n in range(nA))
+    model.const2.add(expr= y_nm_sum2 <= 1000 * x_m[m]) 
 # Mỗi mã lớp chỉ xếp vào buổi học duy nhất
 model.each_class_unique_session = pyo.ConstraintList()
 for n in range(nA):
@@ -132,20 +132,67 @@ for n in range(nA):
         a_nti_sum = sum([a_nti[n, t, i] for i in range(1, 7)])
         model.each_class_unique_session.add(expr= a_nti_sum == 1)
 # Ràng buộc thứ 4
-
+model.const4 = pyo.ConstraintList()
+for n in range(nA):
+    for p in range(nC):
+        for t in range(1, 11):
+            if K_matrix[n, p] == 1:
+                for i in range(1, 7):
+                    model.const4.add(expr= a_nti[n, t, i] <= 2 * (1 - y1) <= K_matrix[n, p])
+                    model.const4.add(expr= P_pt[p, t] - 1 <= 2 * y1)
 # Ràng buộc thứ 5
 
 # Ràng buộc thứ 6
+"""Đã được định nghĩa ngay trong biến"""
+# Ràng buộc thứ 7
+model.in_1_session = pyo.ConstraintList()
+for n in range(nA):
+    for h_n in H_set:
+        model.in_1_session.add(expr = u_n[n] + h_n - 1 <= 6)
+# Ràng buộc thứ 8
+model.const8 = pyo.ConstraintList()
+for n in range(nA):
+    for m in range(nB):
+        for t in range(1, 11):
+            for i in range(1, 7):
+                v_nmti_sum = sum([v_nmti[n, m, t, i]])
+                model.const8.add(expr= v_nmti_sum <= a_nti[n, t, i])
+# Ràng buộc thứ 9
+model.const9 = pyo.ConstraintList()
+for n in range(nA):
+    for m in range(nB):
+        for t in range(1, 11):
+            for i in range(1, 7):
+                v_nmti_sum = sum([v_nmti[n, m, t, i]])
+                model.const9.add(expr= v_nmti_sum <= y_nm[n, m])
+# Ràng buộc thứ 10
 
-
+# Ràng buộc thứ 11
+model.const11 = pyo.ConstraintList()
+for n in range(nA):
+    for p in range(nC):
+        for t in range(1, 11):
+            q_npt_sum = sum([q_npt[n, p, t]])
+            model.const11.add(expr= q_npt_sum <= 100 * P_pt[p, t])
+# Ràng buộc thứ 12
+model.const12 = pyo.ConstraintList()
+for n in range(nA):
+    for p in range(nC):
+        for t in range(1, 11):
+            q_npt_sum = sum([q_npt[n, p, t]])
+            model.const12.add(expr= q_npt_sum <= 2)
 '''Đưa vào các hàm mục tiêu của mô hình'''
 # Số phòng được sử dụng ít nhất
-model.obj1 = pyo.Objective(expr = sum([x_m[m] for m in range(nB)]), sense=minimize)
+model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in range(nB)]), sense=minimize)
 # Số buổi có tiết học trong tuần của một lớp chia theo chương trình đào tạo là ít nhất
-model.obj2 = pyo.Objective()
+P_pt_sum = []
+for p in range(nC):
+    for t in range(1, 11):
+        P_pt_sum.append(P_pt[p, t])
+P_pt_sum = sum(P_pt_sum)
+model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
 # Trong cùng một buổi học các lớp ưu tiên không cần phải di chuyển giữa các phòng
 
-# min 
 
 '''Xử lý mô hình'''
 opt = SolverFactory('cplex')
