@@ -65,8 +65,8 @@ for classroom_name in B_set:
 nD = len(D_set)
 # =============================================================================
 # Nhập ma trận K là ma trận biểu thị các lớp chia theo chương trình đào tạo.
-# Hàng của ma trận ứng với các lớp trong chương trình đào tạo
-# Cột của ma trận ứng với các mã lớp mở trong kỳ
+# Cột của ma trận ứng với các lớp trong chương trình đào tạo
+# Hàng của ma trận ứng với các mã lớp mở trong kỳ
 # Khởi tạo ma trận chứa tất cả các ô là 0, lấy số cột của ma trận và số hàng của
 # ma trận
 # =============================================================================
@@ -188,7 +188,14 @@ for n in range(nA):
         model.const9.add(expr= v_nmti_sum <= y_nm[n, m])
 # Ràng buộc thứ 10
 model.const10 = ConstraintList()
-
+for n in range(nA):
+    for p in range(nC):
+        q_npt_sum10 = []
+        for t in range(1, 10):
+            q_npt_sum10.append(q_npt[n, p, t])
+        q_npt_sum10 = sum(q_npt_sum10)
+        model.const10.add(expr= q_npt_sum10 - 1 <= 10000 * y3)
+        model.const10.add(expr= K_matrix[n, p] <= 1000 * (1 - y3))
 # Ràng buộc thứ 11
 model.const11 = pyo.ConstraintList()
 for p in range(nC):
@@ -211,17 +218,17 @@ for p in range(nC):
 model.const13 = pyo.ConstraintList()
 for n in range(nA):
     for m in range(nB):
-        model.const13.add(expr= F_set[n] * y_nm[n, m] <= 0.9 * D_set[m] * x_m[m])
+        model.const13.add(expr= F_set[n] * y_nm[n, m] <= D_set[m] * x_m[m])
 '''Đưa vào các hàm mục tiêu của mô hình'''
 # Số phòng được sử dụng ít nhất
-model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in range(nB)]), sense=minimize)
+model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in range(nB)]), sense=maximize)
 # Số buổi có tiết học trong tuần của một lớp chia theo chương trình đào tạo là ít nhất
 P_pt_sum = []
 for p in range(nC):
-    for t in range(1, 11):
-        P_pt_sum.append(P_pt[p, t])
-P_pt_sum = sum(P_pt_sum)
-model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
+	for t in range(1, 11):
+         P_pt_sum.append(P_pt[p, t])
+ P_pt_sum = sum(P_pt_sum)
+ model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
 # Trong cùng một buổi học các lớp ưu tiên không cần phải di chuyển giữa các phòng
 
 
@@ -229,3 +236,5 @@ model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
 opt = SolverFactory('cplex')
 opt.solve(model)
 
+classroom_df["result"] = [pyo.value(x_m[m]) for m in range(nB)]
+print(classroom_df)
