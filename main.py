@@ -64,7 +64,7 @@ for classroom_name in B_set:
     D_set.append(classroom.get_classroom_capacity(classroom_name))
 nD = len(D_set)
 # =============================================================================
-# Nhập ma trận G là ma trận biểu thị các lớp chia theo chương trình đào tạo.
+# Nhập ma trận K là ma trận biểu thị các lớp chia theo chương trình đào tạo.
 # Hàng của ma trận ứng với các lớp trong chương trình đào tạo
 # Cột của ma trận ứng với các mã lớp mở trong kỳ
 # Khởi tạo ma trận chứa tất cả các ô là 0, lấy số cột của ma trận và số hàng của
@@ -103,17 +103,24 @@ u_n = model.u
 # =============================================================================
 
 # Tạo biến a_nti nếu mã lớp thứ n bắt đầu từ tiết thứ i của buổi t. 
-model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
+model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Integers)
 a_nti = model.a
 # Biến P_pt = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
-model.P = pyo.Var(range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Binary)
+model.P = pyo.Var(range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Integers)
 P_pt = model.P
 # Biến v_nmti là mã lớp thứ n được xếp vào phòng học thứ m vào buổi t, bắt đầu vào tiết i
-model.v = pyo.Var(range(nA), range(nC), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Binary)
+model.v = pyo.Var(range(nA), range(nC), range(1, 11), range(1, 7), bounds=(0, 1), initialize=(0), within=Integers)
 v_nmti = model.v
 # Biến q_npt là mã lớp n có lớp con p học vào buổi t
-model.q = pyo.Var(range(nA), range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Binary)
-q_npt = model.q 
+model.q = pyo.Var(range(nA), range(nC), range(1, 11), bounds=(0, 1), initialize=(0), within=Integers)
+q_npt = model.q
+# Tạo các biến nhị phân y1, y2, y3
+model.y1 = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
+y1 = model.y1
+model.y2 = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
+y2 = model.y2
+model.y3 = pyo.Var(bounds=(0, 1), initialize=(0), within=Binary)
+y3 = model.y3
 '''Đưa vào các ràng buộc của mô hình'''
 # Mỗi mã lớp chỉ được xếp vào một phòng duy nhất
 model.class_limit = pyo.ConstraintList()
@@ -124,7 +131,7 @@ for n in range(nA):
 model.const2 = pyo.ConstraintList()
 for m in range(nB):
     y_nm_sum2 = sum(y_nm[n, m] for n in range(nA))
-    model.const2.add(expr= y_nm_sum2 <= 1000 * x_m[m]) 
+    model.const2.add(expr= y_nm_sum2 <= 10000  * x_m[m]) 
 # Mỗi mã lớp chỉ xếp vào buổi học duy nhất
 model.each_class_unique_session = pyo.ConstraintList()
 for n in range(nA):
@@ -136,12 +143,22 @@ model.const4 = pyo.ConstraintList()
 for n in range(nA):
     for p in range(nC):
         for t in range(1, 11):
-            if K_matrix[n, p] == 1:
-                for i in range(1, 7):
-                    model.const4.add(expr= a_nti[n, t, i] <= 2 * (1 - y1) <= K_matrix[n, p])
-                    model.const4.add(expr= P_pt[p, t] - 1 <= 2 * y1)
+            a_nti_sum4 = []
+            for i in range(1, 7):
+                a_nti_sum4.append(a_nti[n, t, i])
+            a_nti_sum4 = sum(a_nti_sum4)
+            model.const4.add(expr= q_npt[n, p, t] <= 10000 * (1 - y1))
+            model.const4.add(expr= a_nti_sum <= 10000 * y1)
 # Ràng buộc thứ 5
-
+model.const5 = ConstraintList()
+for n in range(nA):
+    for i in range(1, 7):
+        a_nti_sum5 = []
+        for t in range(1, 11):
+            a_nti_sum5.append(a_nti[n, t, i])
+        a_nti_sum5 = sum(a_nti_sum5)
+        model.const5.add(expr= a_nti_sum5 <= 10000 * (1 - y2))
+        model.const5.add(expr= u_n[n] - i <= 100 * y2)
 # Ràng buộc thứ 6
 """Đã được định nghĩa ngay trong biến"""
 # Ràng buộc thứ 7
@@ -152,35 +169,49 @@ for n in range(nA):
 # Ràng buộc thứ 8
 model.const8 = pyo.ConstraintList()
 for n in range(nA):
-    for m in range(nB):
-        for t in range(1, 11):
-            for i in range(1, 7):
-                v_nmti_sum = sum([v_nmti[n, m, t, i]])
-                model.const8.add(expr= v_nmti_sum <= a_nti[n, t, i])
+    for t in range(1, 11):
+        for i in range(1, 7):
+            v_nmti_sum =[]
+            for m in range(nB):
+                v_nmti_sum.append(v_nmti[n, m, t, i])
+            v_nmti_sum = sum(v_nmti_sum)
+            model.const8.add(expr= v_nmti_sum <= a_nti[n, t, i])
 # Ràng buộc thứ 9
 model.const9 = pyo.ConstraintList()
 for n in range(nA):
     for m in range(nB):
+        v_nmti_sum = []
         for t in range(1, 11):
             for i in range(1, 7):
-                v_nmti_sum = sum([v_nmti[n, m, t, i]])
-                model.const9.add(expr= v_nmti_sum <= y_nm[n, m])
+                v_nmti_sum.append(v_nmti[n, m, t, i])
+        v_nmti_sum = sum(v_nmti_sum)
+        model.const9.add(expr= v_nmti_sum <= y_nm[n, m])
 # Ràng buộc thứ 10
+model.const10 = ConstraintList()
 
 # Ràng buộc thứ 11
 model.const11 = pyo.ConstraintList()
-for n in range(nA):
-    for p in range(nC):
-        for t in range(1, 11):
-            q_npt_sum = sum([q_npt[n, p, t]])
-            model.const11.add(expr= q_npt_sum <= 100 * P_pt[p, t])
+for p in range(nC):
+    for t in range(1, 11):
+        q_npt_sum = []
+        for n in range(nA):
+            q_npt_sum.append(q_npt[n, p, t])
+        q_npt_sum = sum(q_npt_sum)
+        model.const11.add(expr= q_npt_sum <= 10000 * P_pt[p, t])
 # Ràng buộc thứ 12
 model.const12 = pyo.ConstraintList()
-for n in range(nA):
-    for p in range(nC):
+for p in range(nC):
+    for n in range(nA):
+        q_npt_sum = []
         for t in range(1, 11):
-            q_npt_sum = sum([q_npt[n, p, t]])
-            model.const12.add(expr= q_npt_sum <= 2)
+            q_npt_sum.append(q_npt[n, p, t])
+        q_npt_sum = sum(q_npt_sum)
+        model.const12.add(expr= q_npt_sum <= 2)
+# Ràng buộc thứ 13
+model.const13 = pyo.ConstraintList()
+for n in range(nA):
+    for m in range(nB):
+        model.const13.add(expr= F_set[n] * y_nm[n, m] <= 0.9 * D_set[m] * x_m[m])
 '''Đưa vào các hàm mục tiêu của mô hình'''
 # Số phòng được sử dụng ít nhất
 model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in range(nB)]), sense=minimize)
@@ -196,4 +227,5 @@ model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
 
 '''Xử lý mô hình'''
 opt = SolverFactory('cplex')
-results = opt.solve(model)
+opt.solve(model)
+
