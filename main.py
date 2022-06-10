@@ -100,7 +100,7 @@ a_nti = model.a
 model.P = pyo.Var(range(nC), range(1, 11), bounds=(0, 1), within=Integers)
 P_pt = model.P
 # Biến v_nmti là mã lớp thứ n được xếp vào phòng học thứ m vào buổi t, bắt đầu vào tiết i
-model.v = pyo.Var(range(nA), range(nC), range(1, 11), range(1, 7), bounds=(0, 1), within=Integers)
+model.v = pyo.Var(range(nA), range(nB), range(1, 11), range(1, 7), bounds=(0, 1), within=Integers)
 v_nmti = model.v
 # Biến q_npt là mã lớp n có lớp con p học vào buổi t
 model.q = pyo.Var(range(nA), range(nC), range(1, 11), bounds=(0, 1), within=Integers)
