@@ -104,7 +104,7 @@ for m in B_set:
     for n in A_set:
         y_nm_n.append(y_nm[n, m])
         y_nm_n_sum = sum(y_nm_n)
-    model.constraint_2.add(expr= y_nm_n_sum <= 10000 * x_m[m])
+    model.constraint_2.add(expr= y_nm_n_sum <=  * x_m[m])
     
 # Ràng buộc 3 
 model.constraint_3 = pyo.ConstraintList()
@@ -155,5 +155,5 @@ for m in B_set:
 model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in B_set]), sense=minimize)
 
 '''Xử lý mô hình'''
-opt = SolverFactory('mindtpy')
-results = opt.solve(model, mip_solver='cplex', nlp_solver='ipopt') 
+opt = SolverFactory('')
+results = opt.solve(model)
