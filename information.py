@@ -82,3 +82,19 @@ class ClassInformation:
     def get_class_code(self):
         class_code = self.df["Mã lớp"].to_list()
         return class_code
+    
+    def get_class_code_order(self):
+        class_code_order = self.df["STT theo mã HP"].to_list()
+        return class_code_order
+    
+    def get_class_group(self, class_code_order):
+        '''Trả về tên của các lớp con tham gia một mã lớp'''
+        participant_class_index  = self.df.index[self.df['STT theo mã HP'] == class_code_order].astype(int)[0]
+        class_group = self.df.at[participant_class_index, "Lớp"]
+        return class_group
+    
+    def get_class_code_each_class_group(self, class_group):
+        class_code_index  = self.df.index[self.df['Lớp'] == class_group].astype(int)[0]
+        class_code = self.df.at[class_code_index, "Mã lớp"]
+        return class_code
+        
