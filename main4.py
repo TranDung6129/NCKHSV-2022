@@ -197,14 +197,20 @@ for m in B_set:
                 
 # Ràng buộc 8, 9: Các tiết học của một mã lớp phải được xếp liên tiếp nhau 
 model.constraint_8 = pyo.ConstraintList()
-
-
-
-
-
-
-
-model.constraint_9 = pyo.ConstraintList()
+for n in A_set:
+    for m in B_set:
+        for t in range(1, 11):
+            for k in range(1, H_set[A_set.index(n)]):
+                model.constraint_8.add(expr=x_tignm[t, 1, g_set[A_set.index(n)], n, m] <= x_tignm[t, k + 1, g_set[A_set.index(n)], n, m])
+                            
+for n in A_set:
+    for m in B_set:
+        for t in range(1, 11):
+            for i in range(1, 6):
+                for k in range(2, H_set[A_set.index(n)]):
+                    if i + k <= 6:
+                        model.constraint_8.add(expr=x_tignm[t, i + 1, g_set[A_set.index(n)], n, m] <= x_tignm[t, i, g_set[A_set.index(n)], n, m] + x_tignm[t, i + k, g_set[A_set.index(n)], n, m])
+                              
 '''Đưa vào các hàm mục tiêu của mô hình'''
 model.obj1 = pyo.Objective(expr= sum([z_m[m] for m in B_set]), sense=pyo.minimize)
 
