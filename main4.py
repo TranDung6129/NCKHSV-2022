@@ -294,6 +294,8 @@ study_day_output = []
 study_half_day_output = []
 room_output = []
 room_capacity_output = []
+start_period = []
+end_period = []
 
 def get_day(optimal_data):
     if optimal_data[0] == 1 or optimal_data[0] == 2:
@@ -313,22 +315,36 @@ def get_half_day(optimal_data):
     if optimal_data[0] %2 == 1:
         return "Sáng"
     
-def get_room_in_use(optimal_data):
-    room_in_use = optimal_data[4]
-    return room_in_use
+# Lấy ngày học từ dữ liệu tối ưu 
+for choice in chosen_optimal:
+    study_day_output.append(get_day(choice[0]))
 
+# Lấy những phòng sẽ sử dụng từ dữ liệu tối ưu 
+for choice__ in chosen_optimal:
+    room_output.append(choice__[0][4])
 
+# Lấy buổi học từ dữ liệu tối ưu 
+for _choice in chosen_optimal:
+    study_half_day_output.append(get_half_day(_choice[0]))
+# Lấy tiết học bắt đầu và kết thúc của mỗi lớp trong dữ liệu tối ưu
+for _choice_ in chosen_optimal:
+    start_period.append(_choice_[0][1])
+    end_period.append(_choice_[1][1])
+
+# Lấy sức chứa các phòng học trong dữ liệu tối ưu
+for choice_ in chosen_optimal:
+    room_capacity_output.append(D_set[B_set.index(choice_[0][4])])
 expected_timetable = {'Mã lớp': A_set,
                       'Lớp tham gia': g_set,
                       'Mã_HP': credit_code_list,
                       'Tên HP': credit_name_list,
-                      'Thứ': [2, 3, 4, 5, 6, 7, 8, 9, 10, 1],
-                      'BĐ': [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                      'KT': [4, 4, 5, 6, 6, 6, 4, 4, 5, 6],
-                      'Kíp': ['Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều', 'Sáng'],
+                      'Thứ': study_day_output,
+                      'BĐ': start_period,
+                      'KT': end_period,
+                      'Kíp': study_half_day_output,
                       'Sĩ số': class_population_list,
-                      'Phòng': ['D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103', 'D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103'],
-                      'Sức chứa': [1, 2, 3, 1, 2, 4, 4, 5, 6, 6]
+                      'Phòng': room_output,
+                      'Sức chứa': room_capacity_output
                       }
 
 expected_timetable = pd.DataFrame.from_dict(expected_timetable)
