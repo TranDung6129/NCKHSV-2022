@@ -244,28 +244,31 @@ for class_code in range(len(A_set)):
     class_population_list.append(information_df.at[class_code, "Số SV lớp cố định"])
 
 
-# Lấy buổi học từ kết quả tối ưu
-# def get_study_half(optimal_data):
-#     '''Lấy buổi học theo từ kết quả tối ưu'''
-#     result = ''
-#     if (optimal_data[0]) % 2 == 0:
-#         result = 'Chiều'
-#     else:
-#         result = 'Sáng'
-# Danh sách chứa key các đầu ra 
+# Danh sách chứa tất cả các phương án chấp nhận được 
 key_list = []
 for key in model.v:
     if pyo.value(model.v[key]) == 0:
         key_list.append(key)
         
-true_data_list = []
+correct_data_list = []
 for key1 in key_list:
     for key2 in key_list:
         if key1[0] == key2[0] and key1[2] == key2[2] and key1[4] == key2[4]:
             periods_length = key2[1] - key1[1]
             if periods_length == H_set[g_set.index(key1[2])]:
-                true_data_list.append([key1, key2])
-                
+                correct_data_list.append([key1, key2])
+# Dictionary chứa số key bằng số mã lớp được xếp, mỗi mã lớp được xếp có hai key 
+# gồm key chứa danh sách các phương án chấp nhận được ứng với mã lớp đó và key 
+# chứa khối lượng tiết mỗi tuần của mã lớp đó          
+class_dict = {}
+for n in A_set:
+    class_dict[n] = {f"{n}": [], "periods": H_set[A_set.index(n)]} 
+
+# Thêm các phương án chấp nhận được ứng với mỗi mã lớp 
+# for data in correct_data_list:
+    
+
+                                                            
 study_day = [2, 3, 4, 5, 6]
 study_half_day = ["Sáng", "Chiều"]
 study_time_dict = {"Thứ": study_day, "Kíp": study_half_day}
