@@ -255,10 +255,17 @@ for class_code in range(len(A_set)):
 # Danh sách chứa key các đầu ra 
 key_list = []
 for key in model.v:
-    if pyo.value(model.v[key]) != 0:
+    if pyo.value(model.v[key]) == 0:
         key_list.append(key)
         
-        
+true_data_list = []
+for key1 in key_list:
+    for key2 in key_list:
+        if key1[0] == key2[0] and key1[2] == key2[2] and key1[4] == key2[4]:
+            periods_length = key2[1] - key1[1]
+            if periods_length == H_set[g_set.index(key1[2])]:
+                true_data_list.append([key1, key2])
+                
 study_day = [2, 3, 4, 5, 6]
 study_half_day = ["Sáng", "Chiều"]
 study_time_dict = {"Thứ": study_day, "Kíp": study_half_day}
@@ -288,19 +295,6 @@ def get_room_in_use(optimal_data):
     room_in_use = optimal_data[4]
     return room_in_use
 
-# def get_periods_length_available(optimal_data_1, optimal_data_2):
-#     output_class = []
-#     if optimal_data_1[0] == optimal_data_2[0] and optimal_data_1[2] == optimal_data_2[2] and optimal_data_1[4] == optimal_data_2[4]:
-#         periods_length = optimal_data_2[1] - optimal_data_2[1]
-#         if periods_length == H_set[A_set.index(optimal_data_1[3])]:
-#             output_class.append(optimal_data_1, optimal_data_2)
-#             return output_class
-
-# get_available_data = []
-# for optimal_data_1 in key_list:
-#     for optimal_data_2 in key_list:
-#         get_available_data.append(get_periods_length_available(optimal_data_1, optimal_data_2))
-        
 optimal_data_day = []
 for key in key_list:
      pass
@@ -308,13 +302,13 @@ expected_timetable = {'Mã lớp': A_set,
                       'Lớp tham gia': g_set,
                       'Mã_HP': credit_code_list,
                       'Tên HP': credit_name_list,
-                      'Thứ': [2, 3, 4, 5, 6, 7],
-                      'BĐ': [1, 1, 2, 3, 4, 5],
-                      'KT': [4, 4, 5, 6, 6, 6],
-                      'Kíp': ['Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều'],
+                      'Thứ': [2, 3, 4, 5, 6, 7, 8, 9, 10, 1],
+                      'BĐ': [1, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                      'KT': [4, 4, 5, 6, 6, 6, 4, 4, 5, 6],
+                      'Kíp': ['Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều', 'Sáng'],
                       'Sĩ số': class_population_list,
-                      'Phòng': ['D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103', 'D7-203'],
-                      'Sức chứa': [1, 2, 3, 1, 2, 3]
+                      'Phòng': ['D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103', 'D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103'],
+                      'Sức chứa': [1, 2, 3, 1, 2, 4, 4, 5, 6, 6]
                       }
 
 expected_timetable = pd.DataFrame.from_dict(expected_timetable)
