@@ -249,7 +249,16 @@ key_list = []
 for key in model.v:
     if pyo.value(model.v[key]) == 0:
         key_list.append(key)
-        
+
+# Loại bỏ các key mà không đảm bảo về sức chứa của phòng
+temp_list = []
+for key in key_list:
+    if D_set[B_set.index(key[4])] > F_set[A_set.index(key[3])]:
+        temp_list.append(key)
+    continue
+
+key_list = temp_list
+
 correct_data_list = []
 for key1 in key_list:
     for key2 in key_list:
@@ -266,7 +275,7 @@ for n in A_set:
 
 # Thêm các phương án chấp nhận được ứng với mỗi mã lớp 
 # for data in correct_data_list:
-for data in true_data_list:
+for data in correct_data_list:
     for n in A_set:
         if data[0][3] == n:
             class_dict[n][n].append(data)
