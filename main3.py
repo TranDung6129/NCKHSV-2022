@@ -266,9 +266,11 @@ for n in A_set:
 
 # Thêm các phương án chấp nhận được ứng với mỗi mã lớp 
 # for data in correct_data_list:
-    
+for data in true_data_list:
+    for n in A_set:
+        if data[0][3] == n:
+            class_dict[n][n].append(data)
 
-                                                            
 study_day = [2, 3, 4, 5, 6]
 study_half_day = ["Sáng", "Chiều"]
 study_time_dict = {"Thứ": study_day, "Kíp": study_half_day}
@@ -315,4 +317,3 @@ expected_timetable = {'Mã lớp': A_set,
                       }
 
 expected_timetable = pd.DataFrame.from_dict(expected_timetable)
-
