@@ -7,7 +7,7 @@ class Classroom:
     def __init__(self):
         '''Em chưa nghĩ ra cách để chỉ chạy mà không cần làm gì cả, thế nên trước mắt thì sẽ giải quyết 
         bằng cách là để người sử dụng về sau tự nhập thông tin cột, em sẽ nghĩ cách để tự động hết sau ạ'''
-        filepath = 'D:/Nghiên cứu ứng dụng/Bài toán lập lịch/TKB-SIE-ky-20212-14.4.22.xlsx'
+        filepath = 'D:/Nhóm nghiên cứu/Nghiên cứu ứng dụng/Bài toán lập lịch/TKB-SIE-ky-20212-14.4.22.xlsx'
         
         # Lựa chọn biểu đồ chứa danh sách phòng học
         self.df = pd.read_excel(filepath, sheet_name = 'BIỂU ĐỒ (S)')
@@ -43,8 +43,7 @@ class Classroom:
     
     def get_class_room_list(self):
         classroom_list = self.df["Tên phòng"].to_list()
-        return classroom_list 
-    
+        return classroom_list
     def get_available_classroom_number(self):
         '''In ra số lượng phòng có thể sử dụng'''
         self.df = self.df.apply(lambda x : True if x['Sức chứa'] != 0 else False, axis=1)
@@ -55,7 +54,3 @@ class Classroom:
         classroom_name= ('tên của phòng học muốn lấy sức chứa')'''
         class_capacity_index = self.df.index[self.df['Tên phòng'] == classroom_name].astype(int)[0]
         return self.df.at[class_capacity_index, "Sức chứa"]
-    
-    def in_use(self, classroom_name):
-        pass
-    
