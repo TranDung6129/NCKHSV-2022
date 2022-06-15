@@ -6,14 +6,12 @@ from information import ClassInformation
 import pyomo.environ as pyo
 from pyomo.environ import * 
 import itertools
-import time as t
+from pyomo.opt import SolverStatus, TerminationCondition
+from functools import reduce
+from time import time
+import random 
 
-'''Nhập đường dẫn và cột không tên là em chưa nghĩ ra hướng giải quyết phù hợp, 
-em dự định sử dụng file nhưng thử mãi chưa dùng được nên chị có thể kiểm tra giúp
-em xem có phù hợp không nếu không thì sẽ nghĩ cách khác ạ'''
-'''Ở trên là cách giải quyết đường dẫn như nhập file Excel nhưng còn cột không được 
-đặt tên thì em vẫn chưa nghĩ ra cách giải quyết ạ'''
-
+start_time = time()
 # model
 model = pyo.ConcreteModel()
 # Điều chỉnh DataFrame 
@@ -24,7 +22,7 @@ information_df = information.df
 
 '''Trích xuất các thông tin cần thiết của mô hình'''
 # Tập A gồm n mã lớp sẽ mở trong kỳ xếp thời khóa biểu 
-A_set = [] 
+A_set = []
 for class_code in information.get_class_code():
     A_set.append(class_code)
 nA = len(A_set)
@@ -52,6 +50,9 @@ H_set = []
 for class_code in A_set:
     class_periods = information.get_class_periods_number(class_code)
     H_set.append(int(class_periods))
+for i in range(len(H_set)):
+    if H_set[i] > 4:
+        H_set[i] = 0
 nH = len(H_set)
 # Tập B là m mã phòng hiện có ở tòa D7 
 B_set = []
@@ -63,166 +64,287 @@ D_set = []
 for classroom_name in B_set:
     D_set.append(classroom.get_classroom_capacity(classroom_name))
 nD = len(D_set)
-# =============================================================================
-# Nhập ma trận K là ma trận biểu thị các lớp chia theo chương trình đào tạo.
-# Cột của ma trận ứng với các lớp trong chương trình đào tạo
-# Hàng của ma trận ứng với các mã lớp mở trong kỳ
-# Khởi tạo ma trận chứa tất cả các ô là 0, lấy số cột của ma trận và số hàng của
-# ma trận
-K_matrix = np.zeros((nA, nC))
-for class_code in A_set:
-	class_list = information.get_participant_class(class_code)
-	for class_name in class_list:
-		class_index = C_set.index(class_name)
-		K_matrix[A_set.index(class_code), class_index] = 1
 
-#==============================================================================
+# Tập hợp STT theo mã HP
+STT_set = []
+for class_code_order in information.get_class_code_order():
+    STT_set.append(class_code_order)
+# Tập hợp chứa các lớp ghép 
+G_set = []
+for class_code_order in STT_set:
+    G_set.append(information.get_class_group(class_code_order))
+unique_list = []
+for _ in G_set:
+    if _ not in unique_list:
+        unique_list.append(_)
+G_set = unique_list
+g_set = []
+for class_code_order in STT_set:
+    g_set.append(information.get_class_group(class_code_order))
+
+# dict_1
+# def get_dict_1():
+#     group_class_list = []
+#     for class_code in A_set:
+#         group_class_list.append(information.get_participant_class(class_code))
+#     # Dictionary, key là mã lớp, value là nhóm các lớp con tham gia vào mã lớp đó
+#     dict_1 = {}
+#     for class_code in A_set:
+#         for group_class in group_class_list:
+#             dict_1[class_code] = group_class
+#             group_class_list.remove(group_class)
+#             break
+#     return dict_1
+# # dict_2
+# list_code_course = {}
+# for j in range(len(G_set)):
+#     temp_list = []
+#     for i in range(len(information_df)):
+#         if information_df.iloc[i, 7] == G_set[j]:
+#             temp_list.append(information_df.iloc[i, 0])
+#     list_code_course[G_set[j]] = temp_list
+
+# # dict_3
+# def get_dict_3():
+#     list_student_number = {}
+#     for group_class in G_set:
+#         for student_number in F_set:
+#             list_student_number[group_class] = student_number
+#             F_set.remove(student_number)
+#             break
+#     return list_student_number
+
+# for group_class in G_set
 '''Tạo ra các biến của mô hình'''
-# Tạo biến nhị phân x_m, thể hiện rằng phòng thứ m có được sử dụng hay không
-model.x = pyo.Var(range(nB), bounds=(0, 1), initialize=(0), within=Binary)
-x_m = model.x
-# Tạo biến nhị phân y_nm, thể hiện rằng mã lớp thứ n được xếp vào phòng thứ m 
-model.y = pyo.Var(range(nA), range(nB), bounds=(0, 1), initialize=(0), within=Binary)
-y_nm = model.y
-# Tạo biến u_n, là tiết học bắt đầu của lớp thứ n 
-model.u = pyo.Var(range(nA), bounds=(1, 6), domain=Integers)
-u_n = model.u
-# =============================================================================
-# # Tạo biến t là buổi học trong tuần (từ thứ 2 đến thứ 6, sáng và chiều)
-# model.t = pyo.Var(bounds=(1, 10), domain=Integers)
-# t = model.t
-# =============================================================================
+model.v = pyo.Var(range(1, 11), range(1, 7), g_set, A_set, B_set, initialize=(0), within=Binary)
+v_tignm = model.v
 
-# Tạo biến a_nti nếu mã lớp thứ n bắt đầu từ tiết thứ i của buổi t. 
-model.a = pyo.Var(range(nA), range(1, 11), range(1, 7), bounds=(0, 1), within=Integers)
-a_nti = model.a
-# Biến P_pt = 1 nếu lớp p học vào buổi thứ t và p_t = 0 nếu ngược lại
-model.P = pyo.Var(range(nC), range(1, 11), bounds=(0, 1), within=Integers)
-P_pt = model.P
-# Biến v_nmti là mã lớp thứ n được xếp vào phòng học thứ m vào buổi t, bắt đầu vào tiết i
-model.v = pyo.Var(range(nA), range(nB), range(1, 11), range(1, 7), bounds=(0, 1), within=Integers)
-v_nmti = model.v
-# Biến q_npt là mã lớp n có lớp con p học vào buổi t
-model.q = pyo.Var(range(nA), range(nC), range(1, 11), bounds=(0, 1), within=Integers)
-q_npt = model.q
-# Tạo các biến nhị phân y1, y2, y3
-model.y1 = pyo.Var(bounds=(0, 1), within=Binary)
-y1 = model.y1
-model.y2 = pyo.Var(bounds=(0, 1), within=Binary)
-y2 = model.y2
-model.y3 = pyo.Var(bounds=(0, 1), within=Binary)
-y3 = model.y3
+model.y = pyo.Var(A_set, B_set, H_set, range(1, 11), initialize=(0), within=Binary)
+y_nmht = model.y
+
+model.a = pyo.Var(B_set, initialize=(0), within=Binary)
+a_m = model.a
+
 '''Đưa vào các ràng buộc của mô hình'''
-# Mỗi mã lớp chỉ được xếp vào một phòng duy nhất
-model.class_limit = pyo.ConstraintList()
-for n in range(nA):
-    y_nm_sum = sum([y_nm[n, m] for m in range(nB)])
-    model.class_limit.add(expr= y_nm_sum == 1)
-# Ràng buộc 2
-model.const2 = pyo.ConstraintList()
-for m in range(nB):
-    y_nm_sum2 = sum(y_nm[n, m] for n in range(nA))
-    model.const2.add(expr= y_nm_sum2 <= 10000  * x_m[m]) 
-# Mỗi mã lớp chỉ xếp vào buổi học duy nhất
-model.each_class_unique_session = pyo.ConstraintList()
-for n in range(nA):
-    for t in range(1, 11):
-        a_nti_sum = sum([a_nti[n, t, i] for i in range(1, 7)])
-        model.each_class_unique_session.add(expr= a_nti_sum == 1)
-# Ràng buộc thứ 4
-model.const4 = pyo.ConstraintList()
-for n in range(nA):
-    for p in range(nC):
-        for t in range(1, 11):
-            a_nti_sum4 = []
-            for i in range(1, 7):
-                a_nti_sum4.append(a_nti[n, t, i] - 1)
-            a_nti_sum4 = sum(a_nti_sum4)
-            model.const4.add(expr= q_npt[n, p, t] <= 10000 * (1 - y1))
-            model.const4.add(expr= a_nti_sum <= 10000 * y1)
-# Ràng buộc thứ 5
-model.const5 = ConstraintList()
-for n in range(nA):
+# Ràng buộc 1: Mỗi nhóm lớp tại một thời điểm chỉ học tối đa một mã lớp tại một phòng học duy nhất
+model.constraint_1 = pyo.ConstraintList()
+for t in range(1, 11):
+    v_tignm_components = []
     for i in range(1, 7):
-        a_nti_sum5 = []
-        for t in range(1, 11):
-            a_nti_sum5.append(a_nti[n, t, i])
-        a_nti_sum5 = sum(a_nti_sum5)
-        model.const5.add(expr= a_nti_sum5 <= 10000 * (1 - y2))
-        model.const5.add(expr= u_n[n] - i <= 100 * y2)
-# Ràng buộc thứ 6
-"""Đã được định nghĩa ngay trong biến"""
-# Ràng buộc thứ 7
-model.in_1_session = pyo.ConstraintList()
-for n in range(nA):
-    for h_n in H_set:
-        model.in_1_session.add(expr = u_n[n] + h_n - 1 <= 6)
-# Ràng buộc thứ 8
-model.const8 = pyo.ConstraintList()
-for n in range(nA):
+        for m in B_set:
+            for n in range(len(A_set)):
+                v_tignm_components.append(v_tignm[t, i, g_set[n], A_set[n], m])
+            v_tignm_sum = sum(v_tignm_components)
+        model.constraint_1.add(expr=v_tignm_sum <= 1)
+# Ràng buộc 2: Tại một thời điểm mỗi phòng chỉ có tối đa mã lớp học được học bởi một nhóm lớp
+model.constraint_2 = pyo.ConstraintList()
+for m in B_set:
     for t in range(1, 11):
         for i in range(1, 7):
-            v_nmti_sum =[]
-            for m in range(nB):
-                v_nmti_sum.append(v_nmti[n, m, t, i])
-            v_nmti_sum = sum(v_nmti_sum)
-            model.const8.add(expr= v_nmti_sum <= a_nti[n, t, i])
-# Ràng buộc thứ 9
-model.const9 = pyo.ConstraintList()
-for n in range(nA):
-    for m in range(nB):
-        v_nmti_sum = []
+            v_tignm_components = []
+            for g in g_set:
+                v_tignm_components.append(v_tignm[t, i, g, A_set[g_set.index(g)], m])
+                v_tignm_sum = sum(v_tignm_components)
+                model.constraint_2.add(expr=v_tignm_sum <= 1)
+# Ràng buộc 3: Mỗi mã lớp học phải được xếp đủ số tiết học 
+model.constraint_3 = pyo.ConstraintList()
+for g in g_set:
+    v_tignm_components = []
+    for m in B_set:
         for t in range(1, 11):
             for i in range(1, 7):
-                v_nmti_sum.append(v_nmti[n, m, t, i])
-        v_nmti_sum = sum(v_nmti_sum)
-        model.const9.add(expr= v_nmti_sum <= y_nm[n, m])
-# Ràng buộc thứ 10
-model.const10 = ConstraintList()
-for n in range(nA):
-    for p in range(nC):
-        q_npt_sum10 = []
-        for t in range(1, 10):
-            q_npt_sum10.append(q_npt[n, p, t])
-        q_npt_sum10 = sum(q_npt_sum10)
-        model.const10.add(expr= q_npt_sum10 <= 10000 * y3)
-        model.const10.add(expr= K_matrix[n, p] <= 1000 * (1 - y3))
-# Ràng buộc thứ 11
-model.const11 = pyo.ConstraintList()
-for p in range(nC):
-    for t in range(1, 11):
-        q_npt_sum = []
-        for n in range(nA):
-            q_npt_sum.append(q_npt[n, p, t])
-        q_npt_sum = sum(q_npt_sum)
-        model.const11.add(expr= q_npt_sum <= 10000 * P_pt[p, t])
-# Ràng buộc thứ 12
-model.const12 = pyo.ConstraintList()
-for p in range(nC):
-    for n in range(nA):
-        q_npt_sum = []
+                v_tignm_components.append(v_tignm[t, i, g, A_set[g_set.index(g)], m])
+                v_tignm_sum = sum(v_tignm_components)
+                model.constraint_3.add(expr=v_tignm_sum <= H_set[g_set.index(g)])
+# Ràng buộc 4: Các tiết học của một mã lớp phải học trong cùng một phòng 
+model.constraint_4 = pyo.ConstraintList()
+for n in A_set:
+    for m in B_set:
+        v_tignm_components_1 = []
+        v_tignm_components_2 = []
         for t in range(1, 11):
-            q_npt_sum.append(q_npt[n, p, t])
-        q_npt_sum = sum(q_npt_sum)
-        model.const12.add(expr= q_npt_sum <= 2)
-# Ràng buộc thứ 13
-model.const13 = pyo.ConstraintList()
-for n in range(nA):
-    for m in range(nB):
-        model.const13.add(expr= F_set[n] * y_nm[n, m] <= 0.9 * D_set[m] * x_m[m])
-'''Đưa vào các hàm mục tiêu của mô hình'''
-# Số phòng được sử dụng ít nhất
-model.obj1 = pyo.Objective(expr= sum([x_m[m] for m in range(nB)]), sense=minimize)
-# Số buổi có tiết học trong tuần của một lớp chia theo chương trình đào tạo là ít nhất
-P_pt_sum = []
-for p in range(nC):
-    for t in range(1, 11):
-        P_pt_sum.append(P_pt[p, t])
-P_pt_sum = sum(P_pt_sum)
-model.obj2 = pyo.Objective(expr= P_pt_sum, sense=minimize)
-# Trong cùng một buổi học các lớp ưu tiên không cần phải di chuyển giữa các phòng
+            for i in range(1, 7):
+                v_tignm_components_1.append(v_tignm[t, i, g_set[A_set.index(n)], n, m])
+                v_tignm_1_sum = sum(v_tignm_components_1)
+                v_tignm_components_2.append(v_tignm[t, i, g_set[A_set.index(n)], n, m])
+                v_tignm_2_sum = sum(v_tignm_components_2)
+                model.constraint_4.add(expr=H_set[A_set.index(n)] * v_tignm_2_sum <= v_tignm_1_sum)
+                
+# Ràng buộc 5: Mỗi lớp con tại 1 thời điểm chỉ học tối đa 1 mã lớp tại 1 phòng 
 
+# Ràng buộc 6: Các tiết học của 1 mã lớp phải trong cùng 1 buổi 
+model.constraint_6 = pyo.ConstraintList()
+for n in A_set:
+    v_tignm_components = []
+    for m in B_set:
+        for t in range(1, 11):
+            for i in range(1, 7):
+                v_tignm_components.append(v_tignm[t, i, g_set[A_set.index(n)], n, m])
+            v_tignm_sum = sum(v_tignm_components)
+            model.constraint_6.add(expr=v_tignm_sum == H_set[A_set.index(n)] * y_nmht[n, m, H_set[A_set.index(n)], t])
+# Ràng buộc 7: Số tiết học sử dụng phòng p trong 1 tuần không vượt quá 60 tiết
+model.constraint_7 = pyo.ConstraintList()
+for m in B_set:
+    v_tignm_components = []
+    for t in range(1, 11):
+        for i in range(1, 7):
+            for n in A_set:
+                v_tignm_components.append(v_tignm[t, i, g_set[A_set.index(n)], n, m])
+                v_tignm_sum = sum(v_tignm_components)
+                model.constraint_7.add(expr=a_m[m] <= v_tignm_sum)
+                model.constraint_7.add(expr=v_tignm_sum <= 60 * a_m[m])
+                
+# Ràng buộc 8: Các tiết học của một mã lớp phải được xếp liên tiếp nhau 
+model.constraint_8 = pyo.ConstraintList()
+for n in A_set:
+    for m in B_set:
+        for t in range(1, 11):
+            for k in range(1, H_set[A_set.index(n)]):
+                model.constraint_8.add(expr=v_tignm[t, 1, g_set[A_set.index(n)], n, m] <= v_tignm[t, k + 1, g_set[A_set.index(n)], n, m])
+for n in A_set:
+    for m in B_set:
+        for t in range(1, 11):
+            for i in range(1, 6):
+                for k in range(2, H_set[A_set.index(n)]):
+                    if i + k <= 6:
+                        model.constraint_8.add(expr=v_tignm[t, i + 1, g_set[A_set.index(n)], n, m] <= v_tignm[t, i, g_set[A_set.index(n)], n, m] + v_tignm[t, i + k, g_set[A_set.index(n)], n, m])
+
+# Ràng buộc 9: Các biến v khác 0
+model.constraint_9 = pyo.ConstraintList()
+v_tignm_set = []
+for key in model.v:
+    v_tignm_set.append(model.v[key])
+model.constraint_9.add(expr=sum(v_tignm_set) >= 10)
+'''Đưa vào các hàm mục tiêu của mô hình'''
+model.obj1 = pyo.Objective(expr= sum([a_m[m] for m in B_set]), sense=pyo.minimize)
 
 '''Xử lý mô hình'''
-opt = SolverFactory('mindtpy')
-results = opt.solve(model, mip_solver='cplex', nlp_solver='ipopt')
+opt = SolverFactory('cplex')
+# opt.options['timelimit'] = 1
+results = opt.solve(model, tee=True) 
+
+optimal_values = [pyo.value(model.v[key]) for key in model.v]
+df = pd.DataFrame(optimal_values)
+
+end_time = time()
+time = end_time - start_time
+'''Xuất dữ liệu đã được tối ưu ra file Excel'''
+# Tên học phần học tại các mã lớp 
+credit_name_list = []
+for class_code in range(len(A_set)):
+    credit_name_list.append(information_df.at[class_code, "TÊN HP"])
+    
+# Mã học phần học tại các mã lớp 
+credit_code_list = []
+for class_code in range(len(A_set)):
+    credit_code_list.append(information_df.at[class_code, "MÃ HP"])
+
+# Lấy sĩ số của mỗi mã lớp 
+class_population_list = []
+for class_code in range(len(A_set)):
+    class_population_list.append(information_df.at[class_code, "Số SV lớp cố định"])
+
+
+# Danh sách chứa tất cả các phương án chấp nhận được 
+key_list = []
+for key in model.v:
+    if pyo.value(model.v[key]) == 0:
+        key_list.append(key)
+
+# Loại bỏ các key mà không đảm bảo về sức chứa của phòng
+temp_list = []
+for key in key_list:
+    if D_set[B_set.index(key[4])] > F_set[A_set.index(key[3])]:
+        temp_list.append(key)
+    continue
+
+key_list = temp_list
+
+correct_data_list = []
+for key1 in key_list:
+    for key2 in key_list:
+        if key1[0] == key2[0] and key1[2] == key2[2] and key1[4] == key2[4]:
+            periods_length = key2[1] - key1[1]
+            if periods_length == H_set[g_set.index(key1[2])]:
+                correct_data_list.append([key1, key2])
+# Dictionary chứa số key bằng số mã lớp được xếp, mỗi mã lớp được xếp có hai key 
+# gồm key chứa danh sách các phương án chấp nhận được ứng với mã lớp đó và key 
+# chứa khối lượng tiết mỗi tuần của mã lớp đó          
+class_dict = {}
+for n in A_set:
+    class_dict[n] = {f"{n}": [], "periods": H_set[A_set.index(n)]} 
+
+# Thêm các phương án chấp nhận được ứng với mỗi mã lớp 
+# for data in correct_data_list:
+for data in correct_data_list:
+    for n in A_set:
+        if data[0][3] == n:
+            class_dict[n][n].append(data)
+
+# study_day = [2, 3, 4, 5, 6]
+# study_half_day = ["Sáng", "Chiều"]
+# study_time_dict = {"Thứ": study_day, "Kíp": study_half_day}
+
+# Test output
+chosen_optimal = []
+for n in A_set:
+    chosen_optimal.append(random.choice(class_dict[n][n]))
+
+study_day_output = []
+study_half_day_output = []
+room_output = []
+room_capacity_output = []
+start_period = []
+end_period = []
+
+def get_day(optimal_data):
+    if optimal_data[0] == 1 or optimal_data[0] == 2:
+        return 2
+    if optimal_data[0] == 3 or optimal_data[0] == 4:
+        return 3
+    if optimal_data[0] == 5 or optimal_data[0] == 6:
+        return 4
+    if optimal_data[0] == 7 or optimal_data[0] == 8:
+        return 5
+    if optimal_data[0] == 9 or optimal_data[0] == 10:
+        return 6
+
+def get_half_day(optimal_data):
+    if optimal_data[0] %2 == 0:
+        return "Chiều"
+    if optimal_data[0] %2 == 1:
+        return "Sáng"
+    
+# Lấy ngày học từ dữ liệu tối ưu 
+for choice in chosen_optimal:
+    study_day_output.append(get_day(choice[0]))
+
+# Lấy những phòng sẽ sử dụng từ dữ liệu tối ưu 
+for choice__ in chosen_optimal:
+    room_output.append(choice__[0][4])
+
+# Lấy buổi học từ dữ liệu tối ưu 
+for _choice in chosen_optimal:
+    study_half_day_output.append(get_half_day(_choice[0]))
+# Lấy tiết học bắt đầu và kết thúc của mỗi lớp trong dữ liệu tối ưu
+for _choice_ in chosen_optimal:
+    start_period.append(_choice_[0][1])
+    end_period.append(_choice_[1][1])
+
+# Lấy sức chứa các phòng học trong dữ liệu tối ưu
+for choice_ in chosen_optimal:
+    room_capacity_output.append(D_set[B_set.index(choice_[0][4])])
+expected_timetable = {'Mã lớp': A_set,
+                      'Lớp tham gia': g_set,
+                      'Mã_HP': credit_code_list,
+                      'Tên HP': credit_name_list,
+                      'Thứ': study_day_output,
+                      'BĐ': start_period,
+                      'KT': end_period,
+                      'Kíp': study_half_day_output,
+                      'Sĩ số': class_population_list,
+                      'Phòng': room_output,
+                      'Sức chứa': room_capacity_output
+                      }
+
+expected_timetable = pd.DataFrame.from_dict(expected_timetable)
