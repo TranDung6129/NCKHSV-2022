@@ -308,13 +308,14 @@ expected_timetable = {'Mã lớp': A_set,
                       'Lớp tham gia': g_set,
                       'Mã_HP': credit_code_list,
                       'Tên HP': credit_name_list,
-                      'Thứ': [2, 3, 4],
-                      'BĐ': [1, 1, 2],
-                      'KT': [4, 4, 5],
-                      'Kíp': ['Sáng', 'Chiều', 'Chiều'],
+                      'Thứ': [2, 3, 4, 5, 6, 7],
+                      'BĐ': [1, 1, 2, 3, 4, 5],
+                      'KT': [4, 4, 5, 6, 6, 6],
+                      'Kíp': ['Sáng', 'Chiều', 'Chiều', 'Sáng', 'Chiều', 'Chiều'],
                       'Sĩ số': class_population_list,
-                      'Phòng': ['D7-101', 'D7-103', 'D7-203'],
-                      'Sức chứa': [1, 2, 3]
+                      'Phòng': ['D7-101', 'D7-103', 'D7-203', 'D7-101', 'D7-103', 'D7-203'],
+                      'Sức chứa': [1, 2, 3, 1, 2, 3]
                       }
 
 expected_timetable = pd.DataFrame.from_dict(expected_timetable)
+
